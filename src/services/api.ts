@@ -95,9 +95,9 @@ export const api = {
 
   /**
    * Obtiene todas las tareas del usuario autenticado
-   * autenticado mediante barer token
+   * autenticado mediante Bearer token
    */
-  async getTodos(token: string): Promise<Task[]> { // funcion getTodos que recibe el token como un barer token
+  async getTodos(token: string): Promise<Task[]> { // funcion getTodos que recibe el token como un Bearer token
     try {
         const res = await fetch(`${API_URL}/todos`, {
           headers: {
@@ -121,7 +121,7 @@ export const api = {
   },
 
   /**
-   * Subida de imágenes al servidor 
+   * Subida de imágenes al servidor. Sube imagenes asociadas a las tareas, gestiona el tipo de archivo y retorna URL en caso de subir imagen con exito.
    */
   async uploadImage(uri: string, token: string): Promise<string> {
     try {
