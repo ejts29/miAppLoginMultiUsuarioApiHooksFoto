@@ -4,12 +4,15 @@ import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
 import { NewTaskData, Task } from "../types/todolist";
 
+// Jeremy S: Verificación de estructura y métodos de tareas.
+// Este Custom Hook centraliza toda la lógica de operaciones CRUD para las tareas,
+// separando la lógica de negocio de la interfaz de usuario.
 export function useTodos() {
   const { token, signOut } = useAuth();
   // esto es el estado local de las tareas
-  const [tasks, setTasks] = useState<Task[]>([]); // arreglo de tareas task variable y setTasks para actualizarlo 
-  const [isLoading, setIsLoading] = useState(false); // estado de carga
-  const [error, setError] = useState<string | null>(null); // estado de error
+  const [tasks, setTasks] = useState<Task[]>([]); // Jeremy S: Estado principal que almacena el arreglo de tareas cargadas desde el backend
+  const [isLoading, setIsLoading] = useState(false); // Jeremy S: Estado de carga para mostrar indicadores visuales durante operaciones asíncronas
+  const [error, setError] = useState<string | null>(null); // Jeremy S: Estado para capturar y mostrar mensajes de error al usuario
 
   // Cargar tareas
   const fetchTasks = useCallback(async () => {
@@ -38,7 +41,9 @@ export function useTodos() {
     }
   }, [token, fetchTasks]);
 
-  // Crear tarea (maneja subida de imagen)
+  // Jeremy S: Método para crear nueva tarea con validación de imagen en dos pasos:
+// 1. Si existe imagen local, se sube primero al servidor para obtener URL pública
+// 2. Luego se crea la tarea con todos los datos incluyendo la URL final de la imagen
   const createTodo = async (data: { title: string; photoUri?: string | null; location?: any }) => {
     if (!token) return false;
     setIsLoading(true);
@@ -67,7 +72,7 @@ export function useTodos() {
     }
   };
 
-  // Actualizar tarea
+  // Jeremy S: Método para actualizar una tarea existente permitiendo modificar título, foto y ubicación
   const updateTodo = async (id: string, updates: { title?: string; completed?: boolean; image?: string | null; location?: any }) => {
     if (!token) return false;
     // Si solo estamos haciendo toggle de completed, actualizamos ya
@@ -82,7 +87,7 @@ export function useTodos() {
     try {
         let finalImage = updates.image;
         
-        // Si la imagen cambió y no es remota, subirla
+        // Jeremy S: Validación - si la imagen es local (no empieza con http), debe subirse primero
         if (finalImage && !finalImage.startsWith('http')) {
              finalImage = await api.uploadImage(finalImage, token);
         }
@@ -126,7 +131,7 @@ export function useTodos() {
     }
   };
 
-  // Eliminar tarea
+  // Jeremy S: Método para eliminar tarea - actualiza el estado local removiéndola de la interfaz
   const deleteTodo = async (id: string) => {
       if (!token) return;
       // Optimistic delete
@@ -140,7 +145,7 @@ export function useTodos() {
           setTasks(prevTasks); // Revertir
       }
   };
-
+// Jeremy S: Método para alternar el estado completado/pendiente de una tarea
   const toggleTodo = async (id: string, currentStatus: boolean) => {
       await updateTodo(id, { completed: !currentStatus });
   };
