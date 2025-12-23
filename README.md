@@ -60,33 +60,43 @@ Demostrar dominio en:
 ## **Estructura principal del proyecto**
 
 ```
-miAppLoginMultiUsuarioApi/
-├─ app/
-│  ├─ _layout.tsx
-│  ├─ index.tsx
-│  ├─ auth/
-│  │  └─ index.tsx
-│  └─ home/
-│     ├─ _layout.tsx
-│     ├─ index.tsx
-│     ├─ profile.tsx
-│     └─ todo-list/
-│        ├─ index.tsx
-│        └─ create.tsx
-│
-├─ src/
-│  ├─ context/
-│  │  └─ AuthContext.tsx
-│  └─ services/
-│     └─ api.ts
-│
-├─ types/
-│  └─ todolist.ts
-│
-├─ app.json
-├─ package.json
-├─ tsconfig.json
-└─ README.md
+ miAppLoginMultiUsuarioApiHooksFoto/
+├── app/                      # Rutas de navegación (Expo Router)
+│   ├── _layout.tsx           # Layout principal (Root)
+│   ├── index.tsx             # Pantalla de inicio de la App
+│   ├── auth/                 # Módulo de Autenticación
+│   │   └── index.tsx         # Pantalla de Login / Registro
+│   └── home/                 # Módulo Principal (Protegido)
+│       ├── _layout.tsx       # Layout de navegación del Home
+│       ├── index.tsx         # Pantalla principal (Listado rápido)
+│       ├── profile.tsx       # Perfil de usuario
+│       ├── tareas.tsx        # Vista general de tareas
+│       └── todo-list/        # Gestión de Tareas
+│           ├── index.tsx     # Listado detallado de tareas
+│           ├── create.tsx    # Formulario para nueva tarea
+│           └── edit/
+│               └── [id].tsx  # Edición dinámica de tarea por ID
+├── src/                      # Lógica de negocio y utilidades
+│   ├── context/
+│   │   └── AuthContext.tsx   # Gestión del estado global de autenticación
+│   ├── hooks/
+│   │   └── useTodos.ts       # Hook para el CRUD de tareas y lógica de API
+│   ├── services/
+│   │   └── api.ts            # Configuración de Axios e instancia de API
+│   ├── storage/
+│   │   ├── async.ts          # Utilidades para AsyncStorage
+│   │   └── todolist.ts       # Persistencia específica de tareas (si aplica)
+│   └── types/
+│       └── todolist.ts       # Definiciones de interfaces TypeScript
+├── assets/                   # Recursos estáticos (Imágenes, logos)
+├── components/               # Componentes reutilizables de UI
+├── constants/                # Temas y valores constantes
+├── .env                      # Variables de entorno (API URL)
+├── app.json                  # Configuración de Expo
+├── package.json              # Dependencias del proyecto
+└── tsconfig.json             # Configuración de TypeScript
+ 
+
 ```
 
 ---
