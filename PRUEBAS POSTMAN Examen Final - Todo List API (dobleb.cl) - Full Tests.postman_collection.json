@@ -1,0 +1,623 @@
+{
+	"info": {
+		"_postman_id": "4bb92f18-83cc-4285-b9a8-34b0707c65c3",
+		"name": "Examen Final - Todo List API (dobleb.cl) - Full Tests",
+		"description": "Colección para Evaluación 4 (Examen Final): Auth JWT + CRUD Todos + Upload real de imágenes (POST /images) + GET/DELETE de imágenes. Incluye scripts para guardar token y reutilizar IDs.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "43801966"
+	},
+	"item": [
+		{
+			"name": "0) Health",
+			"item": [
+				{
+					"name": "GET /health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200', function () {",
+									"  pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "1) Auth",
+			"item": [
+				{
+					"name": "POST /auth/register (crear usuario si no existe)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Puede devolver 201 (creado) o 400 (ya existe). Ambos se aceptan.",
+									"pm.test('Register: 201 creado o 400 ya existe', function () {",
+									"  pm.expect([201, 400]).to.include(pm.response.code);",
+									"});",
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  if (json?.data?.token) pm.collectionVariables.set('token', json.data.token);",
+									"  if (json?.data?.user?.id) pm.collectionVariables.set('userId', json.data.user.id);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST /auth/login (guardar token + userId)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Login status 200', function () {",
+									"  pm.response.to.have.status(200);",
+									"});",
+									"const json = pm.response.json();",
+									"pm.test('success true', function () {",
+									"  pm.expect(json.success).to.eql(true);",
+									"});",
+									"if (json?.data?.token) pm.collectionVariables.set('token', json.data.token);",
+									"if (json?.data?.user?.id) {",
+									"  pm.collectionVariables.set('userId', json.data.user.id);",
+									"} else {",
+									"  // Fallback: intentar extraer sub desde JWT si no viene user.id",
+									"  try {",
+									"    const token = pm.collectionVariables.get('token');",
+									"    if (token) {",
+									"      const parts = token.split('.');",
+									"      const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));",
+									"      if (payload?.sub) pm.collectionVariables.set('userId', String(payload.sub));",
+									"    }",
+									"  } catch (e) {}",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2) Images (OBLIGATORIO)",
+			"item": [
+				{
+					"name": "POST /images (subir imagen multipart/form-data)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Upload image status 201', function () {",
+									"  pm.response.to.have.status(201);",
+									"});",
+									"const json = pm.response.json();",
+									"pm.test('success true', function () {",
+									"  pm.expect(json.success).to.eql(true);",
+									"});",
+									"pm.test('url y key presentes', function () {",
+									"  pm.expect(json.data).to.have.property('url');",
+									"  pm.expect(json.data).to.have.property('key');",
+									"});",
+									"if (json?.data?.url) pm.collectionVariables.set('uploadedImageUrl', json.data.url);",
+									"if (json?.data?.key) pm.collectionVariables.set('uploadedImageKey', json.data.key);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdydXBvc0BnbWFpbC5jb20iLCJzdWIiOiJhZllrbjdlc0RMV081QkV6SmtIV3kiLCJpYXQiOjE3NjU1MDU5NzAsImV4cCI6MTc2NjExMDc3MH0.Uu61IjiK4M_n4b7cnR8Mz6z1Q9Ve76AOY2gcoy0yWMA",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "image",
+									"type": "file",
+									"src": [
+										"{{imageFilePath}}",
+										"/C:/Users/ejts2/Desktop/desarrollodeaplicacionesmoviles/UNIDAD4EXAMEN/exm4/fotoPruebaExm4.jpg"
+									]
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/images",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"images"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET /images/{userId}/{imageId} (descargar imagen pública)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200 o 404 (si no existe)', function () {",
+									"  pm.expect([200,404]).to.include(pm.response.code);",
+									"});",
+									"const json = pm.response.json();",
+									"if (json.success) {",
+									"    // Esto guarda la URL completa para el Todo",
+									"    pm.collectionVariables.set(\"uploadedImageUrl\", json.data.url); ",
+									"    ",
+									"    // ESTO ES LO IMPORTANTE: Asegúrate que guarde la 'key' y no el ID",
+									"    pm.collectionVariables.set(\"uploadedImageKey\", json.data.key); ",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImdydXBvNEBnbWFpbC5jb20iLCJzdWIiOiJSSjJORy1NY1JfQVVYUXZlUUg5YksiLCJpYXQiOjE3NjYyNTc3NjUsImV4cCI6MTc2Njg2MjU2NX0.SmlUIlDiAh8-JW5OWFlCPhdRYTcRYAI-lG7wBgoMNfI",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/images/{{userId}}/{{uploadedImageKey}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"images",
+								"{{userId}}",
+								"{{uploadedImageKey}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE /images/{userId}/{imageId} (eliminar imagen, solo propietario)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Delete image: 200/401/403/404', function () {",
+									"  pm.expect([200,401,403,404]).to.include(pm.response.code);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/images/{{userId}}/{{uploadedImageKey}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"images",
+								"{{userId}}",
+								"{{uploadedImageKey}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3) Todos (CRUD completo)",
+			"item": [
+				{
+					"name": "GET /todos (listar)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200', function () {",
+									"  pm.response.to.have.status(200);",
+									"});",
+									"const json = pm.response.json();",
+									"pm.test('success true y data array', function () {",
+									"  pm.expect(json.success).to.eql(true);",
+									"  pm.expect(Array.isArray(json.data)).to.eql(true);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/todos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"todos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST /todos (crear) usando photoUri subida",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 201', function () {",
+									"  pm.response.to.have.status(201);",
+									"});",
+									"const json = pm.response.json();",
+									"pm.test('success true', function () {",
+									"  pm.expect(json.success).to.eql(true);",
+									"});",
+									"pm.test('Todo tiene id y userId', function () {",
+									"  pm.expect(json.data).to.have.property('id');",
+									"  pm.expect(json.data).to.have.property('userId');",
+									"});",
+									"if (json?.data?.id) pm.collectionVariables.set('todoId', json.data.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Tarea creada desde Postman\",\n  \"completed\": false,\n  \"location\": {\n    \"latitude\": -33.45,\n    \"longitude\": -70.66\n  },\n  \"photoUri\": \"{{uploadedImageUrl}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/todos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"todos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET /todos/{id} (obtener uno)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200 o 404', function () {",
+									"  pm.expect([200,404]).to.include(pm.response.code);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/todos/{{todoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"todos",
+								"{{todoId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "PATCH /todos/{id} (actualizar parcial: completed true)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200 o 404', function () {",
+									"  pm.expect([200,404]).to.include(pm.response.code);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"completed\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/todos/{{todoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"todos",
+								"{{todoId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "PUT /todos/{id} (actualizar completo: title + completed + location + photoUri)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200 o 404', function () {",
+									"  pm.expect([200,404]).to.include(pm.response.code);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Tarea editada desde Postman (PUT)\",\n  \"completed\": true,\n  \"location\": {\n    \"latitude\": -33.44,\n    \"longitude\": -70.65\n  },\n  \"photoUri\": \"{{uploadedImageUrl}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/todos/{{todoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"todos",
+								"{{todoId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE /todos/{id} (eliminar)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Delete: 200 o 404', function () {",
+									"  pm.expect([200,404]).to.include(pm.response.code);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/todos/{{todoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"todos",
+								"{{todoId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://todo-list.dobleb.cl"
+		},
+		{
+			"key": "email",
+			"value": "grupo@gmail.com"
+		},
+		{
+			"key": "password",
+			"value": "password123"
+		},
+		{
+			"key": "token",
+			"value": ""
+		},
+		{
+			"key": "userId",
+			"value": ""
+		},
+		{
+			"key": "todoId",
+			"value": ""
+		},
+		{
+			"key": "uploadedImageUrl",
+			"value": ""
+		},
+		{
+			"key": "uploadedImageKey",
+			"value": ""
+		},
+		{
+			"key": "imageFilePath",
+			"value": ""
+		}
+	]
+}
